@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"sync"
 )
@@ -47,6 +48,24 @@ func (s *Server) handler(conn net.Conn) {
 	s.lock.Unlock()
 
 	s.broadCast(user, "上线")
+
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			n, err := conn.Read(buf)
+			if n == 0 {
+				s.broadCast(user, "下线")
+				return
+			}
+
+			if err != nil && err != io.EOF {
+				fmt.Println("Conn Read err:", err)
+			}
+
+			msg := string(buf[:n-1])
+			s.broadCast(user, msg)
+		}
+	}()
 
 	select {}
 }
