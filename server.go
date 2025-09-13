@@ -44,8 +44,9 @@ func (s *Server) handler(conn net.Conn) {
 	user := NewUser(conn)
 	s.lock.Lock()
 	s.sessions[user.Name] = user
-	s.broadCast(user, "上线")
 	s.lock.Unlock()
+
+	s.broadCast(user, "上线")
 
 	select {}
 }
