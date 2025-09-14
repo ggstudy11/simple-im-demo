@@ -63,7 +63,16 @@ func (s *Server) handler(conn net.Conn) {
 			}
 
 			msg := string(buf[:n-1])
-			s.broadCast(user, msg)
+			if msg == "who" {
+				s.lock.RLock()
+				for _, user := range s.sessions {
+					msg := "[" + user.Addr + "]" + user.Name + ":" + "在线..."
+					conn.Write([]byte(msg + "\n"))
+				}
+				s.lock.Lock()
+			} else {
+				s.broadCast(user, msg)
+			}
 		}
 	}()
 
