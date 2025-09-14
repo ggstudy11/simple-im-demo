@@ -85,6 +85,16 @@ func (s *Server) handler(conn net.Conn) {
 					user.Name = newName
 				}
 				s.lock.Unlock()
+			} else if len(msg) > 3 && msg[:3] == "to|" {
+				toUser := strings.Split(msg, "|")[1]
+				message := strings.Split(msg, "|")[2]
+				s.lock.RLock()
+				if u, ok := s.sessions[toUser]; ok {
+					u.conn.Write([]byte(message + "\n"))
+				} else {
+					conn.Write([]byte("用户不存在\n"))
+				}
+				s.lock.RUnlock()
 			} else {
 				s.broadCast(user, msg)
 			}
