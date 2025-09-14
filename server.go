@@ -106,7 +106,7 @@ func (s *Server) handler(conn net.Conn) {
 	for {
 		select {
 		case <-isLive:
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 60):
 			user.conn.Write([]byte("你已被踢下线\n"))
 			delete(s.sessions, user.Name)
 			close(user.Ch)
