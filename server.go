@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -50,6 +51,8 @@ func (s *Server) handler(conn net.Conn) {
 
 	s.broadCast(user, "上线")
 
+	isLive := make(chan string)
+
 	go func() {
 		buf := make([]byte, 4096)
 		for {
@@ -85,10 +88,22 @@ func (s *Server) handler(conn net.Conn) {
 			} else {
 				s.broadCast(user, msg)
 			}
+
+			isLive <- "0"
 		}
 	}()
 
-	select {}
+	for {
+		select {
+		case <-isLive:
+		case <-time.After(time.Second * 10):
+			user.conn.Write([]byte("你已被踢下线\n"))
+			delete(s.sessions, user.Name)
+			close(user.Ch)
+			conn.Close()
+			return
+		}
+	}
 }
 
 func (s *Server) Start() {
