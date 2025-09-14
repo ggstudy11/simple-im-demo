@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"sync"
 )
 
@@ -69,7 +70,18 @@ func (s *Server) handler(conn net.Conn) {
 					msg := "[" + user.Addr + "]" + user.Name + ":" + "在线..."
 					conn.Write([]byte(msg + "\n"))
 				}
+				s.lock.RUnlock()
+			} else if len(msg) > 7 && msg[:7] == "rename|" {
+				newName := strings.Split(msg, "|")[1]
 				s.lock.Lock()
+				if _, ok := s.sessions[newName]; ok {
+					conn.Write([]byte("用户名重复\n"))
+				} else {
+					delete(s.sessions, user.Name)
+					s.sessions[newName] = user
+					user.Name = newName
+				}
+				s.lock.Unlock()
 			} else {
 				s.broadCast(user, msg)
 			}
